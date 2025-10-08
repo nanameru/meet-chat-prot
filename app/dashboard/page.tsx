@@ -183,58 +183,113 @@ export default function DashboardPage() {
           <div className="h-full flex flex-col items-center justify-center">
             <div className="backdrop-blur-2xl bg-black/70 border border-white/5 rounded-2xl sm:rounded-3xl p-6 sm:p-12 shadow-2xl max-w-2xl w-full">
               <div className="text-center space-y-6 sm:space-y-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                  音声録音
-                </h2>
-                <p className="text-gray-400 text-sm sm:text-base">
-                  ボタンを押して録音を開始してください
-                </p>
+                <div className="space-y-2">
+                  <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
+                    音声録音
+                  </h2>
+                  <p className="text-gray-400 text-sm sm:text-base">
+                    {isRecording 
+                      ? "録音中です。もう一度押すと停止します" 
+                      : "ボタンを押して録音を開始してください"}
+                  </p>
+                </div>
 
                 {/* 録音ボタン */}
                 <div className="flex justify-center py-6 sm:py-8">
-                  <button
-                    onClick={isRecording ? stopRecording : startRecording}
-                    disabled={isProcessing}
-                    className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full flex items-center justify-center text-3xl sm:text-4xl transition-all duration-300 ${
-                      isRecording
-                        ? "bg-red-500/90 hover:bg-red-600/90 animate-pulse shadow-red-500/50"
-                        : "bg-blue-500/90 hover:bg-blue-600/90 hover:scale-110 shadow-blue-500/50"
-                    } backdrop-blur-sm shadow-2xl disabled:opacity-50 active:scale-95`}
-                  >
-                    {isRecording ? "⏹" : "🎤"}
-                  </button>
+                  <div className="relative">
+                    {/* 録音中の波形アニメーション */}
+                    {isRecording && (
+                      <>
+                        <div className="absolute inset-0 rounded-full bg-red-500/20 animate-ping"></div>
+                        <div className="absolute inset-0 rounded-full bg-red-500/30 animate-pulse"></div>
+                      </>
+                    )}
+                    
+                    <button
+                      onClick={isRecording ? stopRecording : startRecording}
+                      disabled={isProcessing}
+                      className={`relative w-24 h-24 sm:w-32 sm:h-32 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        isRecording
+                          ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg shadow-red-500/50"
+                          : "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:scale-110 shadow-lg shadow-blue-500/50"
+                      } backdrop-blur-sm disabled:opacity-50 active:scale-95 group`}
+                    >
+                      {isRecording ? (
+                        // 停止アイコン（四角形）
+                        <svg
+                          className="w-10 h-10 sm:w-12 sm:h-12 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <rect x="6" y="6" width="12" height="12" rx="2" />
+                        </svg>
+                      ) : (
+                        // マイクアイコン
+                        <svg
+                          className="w-10 h-10 sm:w-12 sm:h-12 text-white group-hover:scale-110 transition-transform"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {/* ステータス表示 */}
                 <div className="text-center space-y-4">
                   {isRecording && (
-                    <p className="text-red-400 font-semibold animate-pulse text-sm sm:text-base">
-                      録音中...
-                    </p>
+                    <div className="flex items-center justify-center gap-3 text-red-400 font-semibold text-sm sm:text-base">
+                      <div className="flex gap-1">
+                        <span className="w-1 h-4 bg-red-400 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></span>
+                        <span className="w-1 h-6 bg-red-400 rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></span>
+                        <span className="w-1 h-5 bg-red-400 rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></span>
+                      </div>
+                      <span>録音中</span>
+                    </div>
                   )}
                   {isProcessing && (
-                    <p className="text-blue-400 font-semibold text-sm sm:text-base">
-                      文字起こし処理中...
-                    </p>
+                    <div className="flex items-center justify-center gap-3 text-blue-400 font-semibold text-sm sm:text-base">
+                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>文字起こし処理中</span>
+                    </div>
                   )}
                 </div>
 
                 {/* 文字起こし結果 */}
                 {transcription && !isProcessing && (
-                  <div className="mt-6 sm:mt-8 space-y-4">
-                    <div className="backdrop-blur-md bg-black/60 rounded-xl p-4 sm:p-6 border border-white/5 max-h-48 sm:max-h-64 overflow-y-auto">
-                      <h3 className="text-white font-semibold mb-3 text-sm sm:text-base">
-                        文字起こし結果：
-                      </h3>
-                      <p className="text-gray-300 text-left whitespace-pre-wrap text-sm sm:text-base">
+                  <div className="mt-6 sm:mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="backdrop-blur-md bg-gradient-to-br from-black/60 to-black/40 rounded-xl p-4 sm:p-6 border border-white/10 max-h-48 sm:max-h-64 overflow-y-auto shadow-xl">
+                      <div className="flex items-center gap-2 mb-3">
+                        <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <h3 className="text-white font-semibold text-sm sm:text-base">
+                          文字起こし結果
+                        </h3>
+                      </div>
+                      <p className="text-gray-300 text-left whitespace-pre-wrap text-sm sm:text-base leading-relaxed">
                         {transcription}
                       </p>
                     </div>
                     <button
                       onClick={switchToChat}
-                      className="w-full bg-green-500/90 hover:bg-green-600/90 text-white font-bold py-3 sm:py-4 px-6 rounded-xl transition-all duration-300 backdrop-blur-sm shadow-lg shadow-green-500/30 active:scale-98 text-sm sm:text-base"
+                      className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 sm:py-4 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-green-500/30 hover:shadow-green-500/50 active:scale-98 text-sm sm:text-base flex items-center justify-center gap-2 group"
                     >
-                      AIチャットを開始
+                      <span>AIチャットを開始</span>
+                      <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
                     </button>
                   </div>
                 )}
