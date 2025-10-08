@@ -209,6 +209,68 @@ export default function DashboardPage() {
     }
   };
 
+  // クイックアクション（定型質問）
+  const sendQuickAction = async (question: string) => {
+    const userMessage: Message = {
+      role: "user",
+      content: question,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setIsSendingChat(true);
+
+    try {
+      // 最初のメッセージの場合、文字起こし内容をコンテキストとして含める
+      let messageToSend = question;
+      if (messages.length === 0 && transcription) {
+        messageToSend = `以下は音声録音の文字起こし結果です：\n\n「${transcription}」\n\n---\n\nユーザーからの質問: ${question}`;
+      }
+
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: messageToSend,
+          threadId: threadId || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      if (data.threadId && !threadId) {
+        setThreadId(data.threadId);
+      }
+
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: data.text,
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+      
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    } catch (error) {
+      console.error("チャットエラー:", error);
+      const errorMessage: Message = {
+        role: "assistant",
+        content: "申し訳ございません。メッセージの送信に失敗しました。もう一度お試しください。",
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsSendingChat(false);
+    }
+  };
+
   // チャット送信
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -223,11 +285,17 @@ export default function DashboardPage() {
     setIsSendingChat(true);
 
     try {
+      // 最初のメッセージの場合、文字起こし内容をコンテキストとして含める
+      let messageToSend = inputMessage;
+      if (messages.length === 0 && transcription) {
+        messageToSend = `以下は音声録音の文字起こし結果です：\n\n「${transcription}」\n\n---\n\nユーザーからの質問: ${inputMessage}`;
+      }
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: inputMessage,
+          message: messageToSend,
           threadId: threadId || undefined,
         }),
       });
@@ -400,12 +468,49 @@ export default function DashboardPage() {
           {/* メッセージ一覧 */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.length === 0 ? (
-              <div className="h-full flex items-center justify-center">
-                <p className="text-gray-500 text-sm">
-                  {transcription 
-                    ? "文字起こし結果についてAIに質問できます" 
-                    : "メッセージを入力してAIと会話を始めましょう"}
-                </p>
+              <div className="h-full flex flex-col items-center justify-center gap-3 px-6">
+                {transcription ? (
+                  <>
+                    <div className="text-center">
+                      <svg className="w-12 h-12 text-blue-400 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                      </svg>
+                      <p className="text-white font-semibold text-sm mb-1">
+                        文字起こし完了！
+                      </p>
+                      <p className="text-gray-400 text-sm">
+                        文字起こし内容について質問してみましょう
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-center mt-4">
+                      <button
+                        onClick={() => sendQuickAction("要約して")}
+                        disabled={isSendingChat}
+                        className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-xs rounded-lg border border-blue-500/30 transition-all disabled:opacity-50"
+                      >
+                        📝 要約して
+                      </button>
+                      <button
+                        onClick={() => sendQuickAction("重要なポイントを3つ教えて")}
+                        disabled={isSendingChat}
+                        className="px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 text-xs rounded-lg border border-green-500/30 transition-all disabled:opacity-50"
+                      >
+                        ⭐ 重要ポイント
+                      </button>
+                      <button
+                        onClick={() => sendQuickAction("詳しく説明して")}
+                        disabled={isSendingChat}
+                        className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-xs rounded-lg border border-purple-500/30 transition-all disabled:opacity-50"
+                      >
+                        💡 詳しく
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-gray-500 text-sm text-center">
+                    メッセージを入力してAIと会話を始めましょう
+                  </p>
+                )}
               </div>
             ) : (
               <>
@@ -456,7 +561,11 @@ export default function DashboardPage() {
                     sendMessage();
                   }
                 }}
-                placeholder="メッセージを入力..."
+                placeholder={
+                  transcription && messages.length === 0
+                    ? "文字起こし内容について質問する..."
+                    : "メッセージを入力..."
+                }
                 disabled={isSendingChat}
                 className="flex-1 bg-black/60 border border-white/5 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
               />
