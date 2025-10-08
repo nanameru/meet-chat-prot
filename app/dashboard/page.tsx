@@ -1,8 +1,8 @@
 "use client";
 
 import { UserButton, useUser } from "@clerk/nextjs";
-import { useState, useRef, useEffect } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useState, useRef } from "react";
+import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 type ViewMode = "record" | "chat";

@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { mastra } from "@/src/mastra";
+import { randomUUID } from "crypto";
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,14 +19,17 @@ export async function POST(req: NextRequest) {
 
     const chatAgent = mastra.getAgent("chatAgent");
 
+    // threadIdが存在しない場合は新しいIDを生成
+    const currentThreadId = threadId || randomUUID();
+
     // エージェントでメッセージを生成
     const response = await chatAgent.generate(message, {
-      ...(threadId && { threadId }),
+      threadId: currentThreadId,
     });
 
     return NextResponse.json({
       text: response.text,
-      threadId: response.threadId,
+      threadId: currentThreadId,
     });
   } catch (error) {
     console.error("Chat error:", error);
