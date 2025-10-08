@@ -10,12 +10,18 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.44",
     "@clerk/nextjs": "^6.33.3",
     "@convex-dev/auth": "^0.0.90",
+    "@mastra/core": "^0.20.1",
+    "@mastra/libsql": "^0.15.1",
+    "@mastra/loggers": "^0.10.15",
+    "@mastra/memory": "^0.15.6",
     "convex": "^1.27.4",
     "next": "15.5.4",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
