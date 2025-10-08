@@ -2,9 +2,15 @@ import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// 関数内でクライアントを初期化することで、ビルド時のエラーを回避
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY is not set");
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,6 +26,9 @@ export async function POST(req: NextRequest) {
     if (!audioFile) {
       return NextResponse.json({ error: "No audio file provided" }, { status: 400 });
     }
+
+    // 実行時にクライアントを初期化
+    const openai = getOpenAIClient();
 
     // OpenAI Whisper APIで文字起こし
     const transcription = await openai.audio.transcriptions.create({

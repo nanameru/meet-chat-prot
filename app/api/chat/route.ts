@@ -24,7 +24,10 @@ export async function POST(req: NextRequest) {
 
     // エージェントでメッセージを生成
     const response = await chatAgent.generate(message, {
-      threadId: currentThreadId,
+      memory: {
+        thread: currentThreadId,
+        resource: userId, // ユーザーIDをresourceとして使用
+      },
     });
 
     return NextResponse.json({
