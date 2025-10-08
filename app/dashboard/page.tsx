@@ -158,16 +158,17 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 relative overflow-hidden">
+    <div className="min-h-screen bg-black relative overflow-hidden">
       {/* 背景エフェクト */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-800/20 via-transparent to-transparent"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-black to-gray-950"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent"></div>
       
       {/* ヘッダー */}
-      <header className="relative z-10 backdrop-blur-sm bg-black/20 border-b border-white/10">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white">Meet Chat</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-gray-300 text-sm">
+      <header className="relative z-10 backdrop-blur-md bg-black/60 border-b border-white/5">
+        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Meet Chat</h1>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span className="text-gray-300 text-xs sm:text-sm hidden sm:inline">
               {user?.firstName || user?.username || "ユーザー"}
             </span>
             <UserButton afterSignOutUrl="/" />
@@ -176,29 +177,29 @@ export default function DashboardPage() {
       </header>
 
       {/* メインコンテンツ */}
-      <main className="relative z-10 container mx-auto px-6 py-8 h-[calc(100vh-80px)]">
+      <main className="relative z-10 container mx-auto px-4 sm:px-6 py-4 sm:py-8 h-[calc(100vh-60px)] sm:h-[calc(100vh-72px)]">
         {viewMode === "record" ? (
           /* 録音画面 */
           <div className="h-full flex flex-col items-center justify-center">
-            <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-12 shadow-2xl max-w-2xl w-full">
-              <div className="text-center space-y-8">
-                <h2 className="text-3xl font-bold text-white mb-2">
+            <div className="backdrop-blur-2xl bg-black/70 border border-white/5 rounded-2xl sm:rounded-3xl p-6 sm:p-12 shadow-2xl max-w-2xl w-full">
+              <div className="text-center space-y-6 sm:space-y-8">
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                   音声録音
                 </h2>
-                <p className="text-gray-400">
+                <p className="text-gray-400 text-sm sm:text-base">
                   ボタンを押して録音を開始してください
                 </p>
 
                 {/* 録音ボタン */}
-                <div className="flex justify-center py-8">
+                <div className="flex justify-center py-6 sm:py-8">
                   <button
                     onClick={isRecording ? stopRecording : startRecording}
                     disabled={isProcessing}
-                    className={`w-32 h-32 rounded-full flex items-center justify-center text-4xl transition-all duration-300 ${
+                    className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full flex items-center justify-center text-3xl sm:text-4xl transition-all duration-300 ${
                       isRecording
-                        ? "bg-red-500/80 hover:bg-red-600/80 animate-pulse"
-                        : "bg-blue-500/80 hover:bg-blue-600/80 hover:scale-110"
-                    } backdrop-blur-sm shadow-2xl disabled:opacity-50`}
+                        ? "bg-red-500/90 hover:bg-red-600/90 animate-pulse shadow-red-500/50"
+                        : "bg-blue-500/90 hover:bg-blue-600/90 hover:scale-110 shadow-blue-500/50"
+                    } backdrop-blur-sm shadow-2xl disabled:opacity-50 active:scale-95`}
                   >
                     {isRecording ? "⏹" : "🎤"}
                   </button>
@@ -207,12 +208,12 @@ export default function DashboardPage() {
                 {/* ステータス表示 */}
                 <div className="text-center space-y-4">
                   {isRecording && (
-                    <p className="text-red-400 font-semibold animate-pulse">
+                    <p className="text-red-400 font-semibold animate-pulse text-sm sm:text-base">
                       録音中...
                     </p>
                   )}
                   {isProcessing && (
-                    <p className="text-blue-400 font-semibold">
+                    <p className="text-blue-400 font-semibold text-sm sm:text-base">
                       文字起こし処理中...
                     </p>
                   )}
@@ -220,18 +221,18 @@ export default function DashboardPage() {
 
                 {/* 文字起こし結果 */}
                 {transcription && !isProcessing && (
-                  <div className="mt-8 space-y-4">
-                    <div className="backdrop-blur-sm bg-white/10 rounded-xl p-6 border border-white/10">
-                      <h3 className="text-white font-semibold mb-3">
+                  <div className="mt-6 sm:mt-8 space-y-4">
+                    <div className="backdrop-blur-md bg-black/60 rounded-xl p-4 sm:p-6 border border-white/5 max-h-48 sm:max-h-64 overflow-y-auto">
+                      <h3 className="text-white font-semibold mb-3 text-sm sm:text-base">
                         文字起こし結果：
                       </h3>
-                      <p className="text-gray-300 text-left whitespace-pre-wrap">
+                      <p className="text-gray-300 text-left whitespace-pre-wrap text-sm sm:text-base">
                         {transcription}
                       </p>
                     </div>
                     <button
                       onClick={switchToChat}
-                      className="w-full bg-green-500/80 hover:bg-green-600/80 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 backdrop-blur-sm"
+                      className="w-full bg-green-500/90 hover:bg-green-600/90 text-white font-bold py-3 sm:py-4 px-6 rounded-xl transition-all duration-300 backdrop-blur-sm shadow-lg shadow-green-500/30 active:scale-98 text-sm sm:text-base"
                     >
                       AIチャットを開始
                     </button>
@@ -243,11 +244,11 @@ export default function DashboardPage() {
         ) : (
           /* チャット画面 */
           <div className="h-full flex flex-col">
-            <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl shadow-2xl h-full flex flex-col">
+            <div className="backdrop-blur-2xl bg-black/70 border border-white/5 rounded-2xl sm:rounded-3xl shadow-2xl h-full flex flex-col">
               {/* チャットヘッダー */}
-              <div className="p-6 border-b border-white/10">
+              <div className="p-4 sm:p-6 border-b border-white/5">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-white">AIチャット</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-white">AIチャット</h2>
                   <button
                     onClick={() => {
                       setViewMode("record");
@@ -255,7 +256,7 @@ export default function DashboardPage() {
                       setTranscription("");
                       setThreadId("");
                     }}
-                    className="text-gray-400 hover:text-white transition-colors"
+                    className="text-gray-400 hover:text-white transition-colors text-sm sm:text-base"
                   >
                     ← 戻る
                   </button>
@@ -263,7 +264,7 @@ export default function DashboardPage() {
               </div>
 
               {/* メッセージ一覧 */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 sm:space-y-4">
                 {messages.map((msg, idx) => (
                   <div
                     key={idx}
@@ -272,28 +273,28 @@ export default function DashboardPage() {
                     }`}
                   >
                     <div
-                      className={`max-w-[70%] rounded-2xl px-6 py-4 ${
+                      className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-3 sm:px-6 sm:py-4 ${
                         msg.role === "user"
-                          ? "bg-blue-500/80 text-white backdrop-blur-sm"
-                          : "bg-white/10 text-gray-100 backdrop-blur-sm border border-white/10"
+                          ? "bg-blue-500/90 text-white backdrop-blur-md shadow-lg shadow-blue-500/20"
+                          : "bg-black/60 text-gray-100 backdrop-blur-md border border-white/5 shadow-lg"
                       }`}
                     >
-                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                      <p className="whitespace-pre-wrap text-sm sm:text-base">{msg.content}</p>
                     </div>
                   </div>
                 ))}
                 {isProcessing && (
                   <div className="flex justify-start">
-                    <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl px-6 py-4">
-                      <p className="text-gray-300">入力中...</p>
+                    <div className="bg-black/60 backdrop-blur-md border border-white/5 rounded-2xl px-4 py-3 sm:px-6 sm:py-4 shadow-lg">
+                      <p className="text-gray-300 text-sm sm:text-base">入力中...</p>
                     </div>
                   </div>
                 )}
               </div>
 
               {/* 入力フォーム */}
-              <div className="p-6 border-t border-white/10">
-                <div className="flex gap-3">
+              <div className="p-4 sm:p-6 border-t border-white/5">
+                <div className="flex gap-2 sm:gap-3">
                   <input
                     type="text"
                     value={inputMessage}
@@ -306,12 +307,12 @@ export default function DashboardPage() {
                     }}
                     placeholder="メッセージを入力..."
                     disabled={isProcessing}
-                    className="flex-1 bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl px-6 py-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    className="flex-1 bg-black/60 backdrop-blur-md border border-white/5 rounded-xl px-4 py-3 sm:px-6 sm:py-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 text-sm sm:text-base"
                   />
                   <button
                     onClick={sendMessage}
                     disabled={isProcessing || !inputMessage.trim()}
-                    className="bg-blue-500/80 hover:bg-blue-600/80 text-white font-bold px-8 py-4 rounded-xl transition-all duration-300 backdrop-blur-sm disabled:opacity-50"
+                    className="bg-blue-500/90 hover:bg-blue-600/90 text-white font-bold px-6 py-3 sm:px-8 sm:py-4 rounded-xl transition-all duration-300 backdrop-blur-sm disabled:opacity-50 shadow-lg shadow-blue-500/30 active:scale-95 text-sm sm:text-base"
                   >
                     送信
                   </button>
