@@ -11,7 +11,23 @@ interface Message {
 }
 
 interface AnalysisResult {
-  analysis: string;
+  todos: Array<{
+    task: string;
+    priority: "high" | "medium" | "low";
+    assignee?: string;
+    deadline?: string;
+  }>;
+  keyPoints: Array<{
+    point: string;
+    category: "decision" | "discussion" | "warning" | "other";
+    importance: "critical" | "high" | "medium";
+  }>;
+  nextActions: Array<{
+    action: string;
+    reason: string;
+    timeframe: "immediate" | "short-term" | "long-term";
+  }>;
+  summary?: string;
   timestamp: number;
 }
 
@@ -241,8 +257,12 @@ export default function DashboardPage() {
         throw new Error(data.error);
       }
 
+      // 構造化されたデータを設定（前の結果は上書き）
       setAnalysisResult({
-        analysis: data.analysis,
+        todos: data.todos || [],
+        keyPoints: data.keyPoints || [],
+        nextActions: data.nextActions || [],
+        summary: data.summary,
         timestamp: Date.now(),
       });
       
@@ -254,16 +274,16 @@ export default function DashboardPage() {
     }
   };
 
-  // 100文字ごとに自動分析
+  // 100文字ごとに自動分析（録音中でも実行）
   useEffect(() => {
     const currentLength = transcription.length;
     const nextThreshold = Math.floor(lastAnalyzedLength / 100) * 100 + 100;
     
-    // 100文字を超えていて、まだ分析していない場合
-    if (currentLength >= nextThreshold && !isAnalyzing && !isRecording) {
+    // 100文字を超えていて、まだ分析していない場合（録音中でもOK）
+    if (currentLength >= nextThreshold && !isAnalyzing) {
       analyzeTranscription(transcription);
     }
-  }, [transcription, lastAnalyzedLength, isAnalyzing, isRecording]);
+  }, [transcription, lastAnalyzedLength, isAnalyzing]);
 
   // クイックアクション（定型質問）
   const sendQuickAction = async (question: string) => {
@@ -494,7 +514,7 @@ export default function DashboardPage() {
         {/* AI分析結果エリア */}
         {analysisResult && (
           <div className="flex-shrink-0 backdrop-blur-md bg-gradient-to-br from-purple-900/20 to-blue-900/20 rounded-xl p-4 sm:p-6 border border-purple-500/20 shadow-xl">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
@@ -509,16 +529,140 @@ export default function DashboardPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>分析中...</span>
+                  <span>更新中...</span>
                 </div>
               )}
             </div>
-            <div className="text-gray-200 text-left whitespace-pre-wrap text-sm sm:text-base leading-relaxed">
-              {analysisResult.analysis}
+
+            {/* 細長いボタンUI - グラスモーフィズムデザイン */}
+            <div className="space-y-2">
+              {/* TODO一覧 */}
+              {analysisResult.todos.map((todo, idx) => (
+                <div
+                  key={`todo-${idx}`}
+                  className="group relative overflow-hidden rounded-lg backdrop-blur-xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-400/20 hover:border-blue-400/40 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/20 animate-slideIn"
+                  style={{ animationDelay: `${idx * 50}ms` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-400/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="relative px-4 py-3 flex items-center gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <span className="text-lg">✅</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-sm font-medium truncate">
+                        {todo.task}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          todo.priority === "high" 
+                            ? "bg-red-500/20 text-red-300 border border-red-500/30" 
+                            : todo.priority === "medium"
+                            ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                            : "bg-green-500/20 text-green-300 border border-green-500/30"
+                        }`}>
+                          {todo.priority === "high" ? "高" : todo.priority === "medium" ? "中" : "低"}
+                        </span>
+                        {todo.assignee && (
+                          <span className="text-xs text-gray-400">👤 {todo.assignee}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* 重要ポイント一覧 */}
+              {analysisResult.keyPoints.map((point, idx) => (
+                <div
+                  key={`point-${idx}`}
+                  className="group relative overflow-hidden rounded-lg backdrop-blur-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-400/20 hover:border-purple-400/40 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/20 animate-slideIn"
+                  style={{ animationDelay: `${(analysisResult.todos.length + idx) * 50}ms` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-400/5 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="relative px-4 py-3 flex items-center gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <span className="text-lg">
+                        {point.category === "decision" ? "📌" : 
+                         point.category === "warning" ? "⚠️" : 
+                         point.category === "discussion" ? "💬" : "📝"}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-sm font-medium truncate">
+                        {point.point}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          point.importance === "critical" 
+                            ? "bg-red-500/20 text-red-300 border border-red-500/30" 
+                            : point.importance === "high"
+                            ? "bg-orange-500/20 text-orange-300 border border-orange-500/30"
+                            : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                        }`}>
+                          {point.importance === "critical" ? "最重要" : point.importance === "high" ? "重要" : "通常"}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {point.category === "decision" ? "決定" : 
+                           point.category === "warning" ? "注意" : 
+                           point.category === "discussion" ? "議論" : "その他"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* ネクストアクション一覧 */}
+              {analysisResult.nextActions.map((action, idx) => (
+                <div
+                  key={`action-${idx}`}
+                  className="group relative overflow-hidden rounded-lg backdrop-blur-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-400/20 hover:border-green-400/40 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-green-500/20 animate-slideIn"
+                  style={{ animationDelay: `${(analysisResult.todos.length + analysisResult.keyPoints.length + idx) * 50}ms` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-500/0 via-green-400/5 to-green-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="relative px-4 py-3 flex items-center gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <span className="text-lg">⚡</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-sm font-medium truncate">
+                        {action.action}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          action.timeframe === "immediate" 
+                            ? "bg-red-500/20 text-red-300 border border-red-500/30" 
+                            : action.timeframe === "short-term"
+                            ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                            : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                        }`}>
+                          {action.timeframe === "immediate" ? "即座" : action.timeframe === "short-term" ? "短期" : "長期"}
+                        </span>
+                        <span className="text-xs text-gray-400 truncate">
+                          {action.reason}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* 項目がない場合のメッセージ */}
+              {analysisResult.todos.length === 0 && 
+               analysisResult.keyPoints.length === 0 && 
+               analysisResult.nextActions.length === 0 && (
+                <div className="text-center py-8 text-gray-400 text-sm">
+                  分析結果がありません
+                </div>
+              )}
             </div>
-            <div className="mt-3 pt-3 border-t border-purple-500/20">
+
+            <div className="mt-4 pt-3 border-t border-purple-500/20">
               <p className="text-xs text-gray-400">
-                📊 文字数: {lastAnalyzedLength}文字で分析
+                📊 {lastAnalyzedLength}文字で分析 • 
+                {analysisResult.todos.length}個のTODO • 
+                {analysisResult.keyPoints.length}個のポイント • 
+                {analysisResult.nextActions.length}個のアクション
               </p>
             </div>
           </div>

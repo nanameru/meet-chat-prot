@@ -18,22 +18,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 分析エージェントを実行
+    // 分析エージェントを実行（ツールを使って構造化データを生成）
     const response = await analysisAgent.generate(
-      `以下の文字起こし内容を分析して、TODO、提案、重要なポイントを抽出してください：
+      `以下の文字起こし内容を分析してください。必ず提供されているツールを使用して、構造化されたデータを生成してください：
 
+【文字起こし内容】
 ${transcription}
 
-回答は以下の形式でお願いします：
+【指示】
+1. createTodoToolを使用してTODOを抽出
+2. extractKeyPointsToolを使用して重要ポイントを抽出
+3. suggestNextActionsToolを使用して次のアクションを提案
+4. 各ツールを実行して、構造化されたデータを生成してください
 
-【TODO】
-- （具体的なアクションアイテム）
-
-【提案】
-- （改善案やアイデア）
-
-【重要なポイント】
-- （決定事項や注意点）
+必ずツールを実行して、その結果を報告してください。
 `,
       {
         modelSettings: {
@@ -42,9 +40,54 @@ ${transcription}
       }
     );
 
-    // テキストレスポンスを返す
+    // ツール呼び出しの結果を抽出
+    const todos: Array<{
+      task: string;
+      priority: "high" | "medium" | "low";
+      assignee?: string;
+      deadline?: string;
+    }> = [];
+    
+    const keyPoints: Array<{
+      point: string;
+      category: "decision" | "discussion" | "warning" | "other";
+      importance: "critical" | "high" | "medium";
+    }> = [];
+    
+    const nextActions: Array<{
+      action: string;
+      reason: string;
+      timeframe: "immediate" | "short-term" | "long-term";
+    }> = [];
+
+    // toolCallsから結果を抽出
+    if (response.toolCalls && response.toolCalls.length > 0) {
+      for (const toolCall of response.toolCalls) {
+        if (toolCall.toolName === "createTodo" && toolCall.result) {
+          const result = toolCall.result as { todos?: typeof todos };
+          if (result.todos) {
+            todos.push(...result.todos);
+          }
+        } else if (toolCall.toolName === "extractKeyPoints" && toolCall.result) {
+          const result = toolCall.result as { keyPoints?: typeof keyPoints };
+          if (result.keyPoints) {
+            keyPoints.push(...result.keyPoints);
+          }
+        } else if (toolCall.toolName === "suggestNextActions" && toolCall.result) {
+          const result = toolCall.result as { nextActions?: typeof nextActions };
+          if (result.nextActions) {
+            nextActions.push(...result.nextActions);
+          }
+        }
+      }
+    }
+
+    // 構造化データを返す
     return NextResponse.json({
-      analysis: response.text,
+      todos,
+      keyPoints,
+      nextActions,
+      summary: response.text,
       success: true,
     });
   } catch (error) {
