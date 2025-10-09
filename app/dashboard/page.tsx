@@ -1,13 +1,18 @@
 "use client";
 
 import { UserButton, useUser } from "@clerk/nextjs";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+}
+
+interface AnalysisResult {
+  analysis: string;
+  timestamp: number;
 }
 
 // Web Speech API の型定義
@@ -68,6 +73,11 @@ export default function DashboardPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSendingChat, setIsSendingChat] = useState(false);
   const [threadId, setThreadId] = useState<string>("");
+  
+  // 分析機能用の状態
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [lastAnalyzedLength, setLastAnalyzedLength] = useState(0);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -208,6 +218,52 @@ export default function DashboardPage() {
       }
     }
   };
+
+  // 分析実行
+  const analyzeTranscription = async (text: string) => {
+    if (isAnalyzing || !text || text.length < 500) return;
+
+    setIsAnalyzing(true);
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcription: text }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setAnalysisResult({
+        analysis: data.analysis,
+        timestamp: Date.now(),
+      });
+      
+      setLastAnalyzedLength(text.length);
+    } catch (error) {
+      console.error("分析エラー:", error);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // 500文字ごとに自動分析
+  useEffect(() => {
+    const currentLength = transcription.length;
+    const nextThreshold = Math.floor(lastAnalyzedLength / 500) * 500 + 500;
+    
+    // 500文字を超えていて、まだ分析していない場合
+    if (currentLength >= nextThreshold && !isAnalyzing && !isRecording) {
+      analyzeTranscription(transcription);
+    }
+  }, [transcription, lastAnalyzedLength, isAnalyzing, isRecording]);
 
   // クイックアクション（定型質問）
   const sendQuickAction = async (question: string) => {
@@ -435,16 +491,81 @@ export default function DashboardPage() {
           )}
         </div>
 
+        {/* AI分析結果エリア */}
+        {analysisResult && (
+          <div className="flex-shrink-0 backdrop-blur-md bg-gradient-to-br from-purple-900/20 to-blue-900/20 rounded-xl p-4 sm:p-6 border border-purple-500/20 shadow-xl">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                </svg>
+                <h3 className="text-white font-semibold text-base sm:text-lg">
+                  💡 AI分析結果
+                </h3>
+              </div>
+              {isAnalyzing && (
+                <div className="flex items-center gap-2 text-purple-400 text-xs">
+                  <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>分析中...</span>
+                </div>
+              )}
+            </div>
+            <div className="text-gray-200 text-left whitespace-pre-wrap text-sm sm:text-base leading-relaxed">
+              {analysisResult.analysis}
+            </div>
+            <div className="mt-3 pt-3 border-t border-purple-500/20">
+              <p className="text-xs text-gray-400">
+                📊 文字数: {lastAnalyzedLength}文字で分析
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* 分析中のインジケーター（分析結果がまだない場合） */}
+        {isAnalyzing && !analysisResult && transcription.length >= 500 && (
+          <div className="flex-shrink-0 backdrop-blur-md bg-gradient-to-br from-purple-900/20 to-blue-900/20 rounded-xl p-4 sm:p-6 border border-purple-500/20 shadow-xl">
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5 animate-spin text-purple-400" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p className="text-purple-300 text-sm font-medium">
+                AIが内容を分析しています...
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* 文字起こし結果エリア */}
         {(transcription || interimTranscription || isRecording) && (
           <div className="flex-shrink-0 backdrop-blur-md bg-gradient-to-br from-black/60 to-black/40 rounded-xl p-4 sm:p-6 border border-white/10 min-h-[200px] max-h-[300px] overflow-y-auto shadow-xl">
-            <div className="flex items-center gap-2 mb-3">
-              <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <h3 className="text-white font-semibold text-base sm:text-lg">
-                {isRecording ? "リアルタイム文字起こし" : "文字起こし結果"}
-              </h3>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 className="text-white font-semibold text-base sm:text-lg">
+                  {isRecording ? "リアルタイム文字起こし" : "文字起こし結果"}
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400">
+                  {transcription.length}文字
+                </span>
+                {transcription.length >= 500 && transcription.length < lastAnalyzedLength + 500 && (
+                  <span className="text-xs text-green-400">
+                    ✓ 分析済み
+                  </span>
+                )}
+                {transcription.length >= lastAnalyzedLength + 500 && (
+                  <span className="text-xs text-yellow-400 animate-pulse">
+                    ⏳ 分析待ち
+                  </span>
+                )}
+              </div>
             </div>
             <p className="text-gray-300 text-left whitespace-pre-wrap text-base sm:text-lg leading-relaxed">
               {transcription}
