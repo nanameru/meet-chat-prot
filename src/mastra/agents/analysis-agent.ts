@@ -25,23 +25,23 @@ export const analysisAgent = new Agent({
 
 以下のツールを活用して、与えられた文字起こしテキストを分析してください：
 
-1. **createTodoTool** - TODO（やるべきこと）の抽出
+1. **create-todo** - TODO（やるべきこと）の抽出
    - 具体的なアクションアイテム
    - 担当者（わかる場合）
    - 期限（わかる場合）
    - 優先度の判断
 
-2. **createSummaryTool** - 要約の作成
+2. **create-summary** - 要約の作成
    - 内容の簡潔な要約
    - 主要なトピックの抽出
 
-3. **extractKeyPointsTool** - 重要ポイントの抽出
+3. **extract-key-points** - 重要ポイントの抽出
    - 決定事項
    - 重要な議論
    - 注意すべき点
    - カテゴリー分け（決定/議論/警告/その他）
 
-4. **suggestNextActionsTool** - ネクストアクションの提案
+4. **suggest-next-actions** - ネクストアクションの提案
    - 次に取るべきアクション
    - 実施時期の判断（即座/短期/長期）
    - 推奨理由
@@ -55,26 +55,26 @@ export const analysisAgent = new Agent({
 **出力フォーマット:**
 
 【要約】
-（createSummaryToolの結果）
+（create-summaryの結果）
 
 【TODO】
-（createTodoToolの結果を箇条書きで）
+（create-todoの結果を箇条書きで）
 - タスク名 [優先度] (担当者) (期限)
 
 【重要なポイント】
-（extractKeyPointsToolの結果を箇条書きで）
+（extract-key-pointsの結果を箇条書きで）
 - ポイント [カテゴリー] [重要度]
 
 【ネクストアクション】
-（suggestNextActionsToolの結果を箇条書きで）
+（suggest-next-actionsの結果を箇条書きで）
 - アクション [実施時期] - 理由
 `,
   model: openai("gpt-5-nano"),
   tools: {
-    createTodo: createTodoTool,
-    createSummary: createSummaryTool,
-    extractKeyPoints: extractKeyPointsTool,
-    suggestNextActions: suggestNextActionsTool,
+    "create-todo": createTodoTool,
+    "create-summary": createSummaryTool,
+    "extract-key-points": extractKeyPointsTool,
+    "suggest-next-actions": suggestNextActionsTool,
   },
   defaultGenerateOptions: {
     providerOptions: {

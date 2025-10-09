@@ -549,7 +549,7 @@ export default function DashboardPage() {
                       <span className="text-lg">✅</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">
+                      <p className="text-white text-sm font-medium">
                         {todo.task}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
@@ -588,7 +588,7 @@ export default function DashboardPage() {
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">
+                      <p className="text-white text-sm font-medium">
                         {point.point}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
@@ -625,7 +625,7 @@ export default function DashboardPage() {
                       <span className="text-lg">⚡</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">
+                      <p className="text-white text-sm font-medium">
                         {action.action}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
@@ -638,7 +638,7 @@ export default function DashboardPage() {
                         }`}>
                           {action.timeframe === "immediate" ? "即座" : action.timeframe === "short-term" ? "短期" : "長期"}
                         </span>
-                        <span className="text-xs text-gray-400 truncate">
+                        <span className="text-xs text-gray-400">
                           {action.reason}
                         </span>
                       </div>

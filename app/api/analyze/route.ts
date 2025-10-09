@@ -26,9 +26,9 @@ export async function POST(req: NextRequest) {
 ${transcription}
 
 【指示】
-1. createTodoToolを使用してTODOを抽出
-2. extractKeyPointsToolを使用して重要ポイントを抽出
-3. suggestNextActionsToolを使用して次のアクションを提案
+1. create-todoツールを使用してTODOを抽出
+2. extract-key-pointsツールを使用して重要ポイントを抽出
+3. suggest-next-actionsツールを使用して次のアクションを提案
 4. 各ツールを実行して、構造化されたデータを生成してください
 
 必ずツールを実行して、その結果を報告してください。
@@ -61,19 +61,21 @@ ${transcription}
     }> = [];
 
     // toolCallsから結果を抽出
+    console.log("Tool calls received:", response.toolCalls?.length || 0);
     if (response.toolCalls && response.toolCalls.length > 0) {
       for (const toolCall of response.toolCalls) {
-        if (toolCall.toolName === "createTodo" && toolCall.result) {
+        console.log("Processing tool call:", toolCall.toolName);
+        if (toolCall.toolName === "create-todo" && toolCall.result) {
           const result = toolCall.result as { todos?: typeof todos };
           if (result.todos) {
             todos.push(...result.todos);
           }
-        } else if (toolCall.toolName === "extractKeyPoints" && toolCall.result) {
+        } else if (toolCall.toolName === "extract-key-points" && toolCall.result) {
           const result = toolCall.result as { keyPoints?: typeof keyPoints };
           if (result.keyPoints) {
             keyPoints.push(...result.keyPoints);
           }
-        } else if (toolCall.toolName === "suggestNextActions" && toolCall.result) {
+        } else if (toolCall.toolName === "suggest-next-actions" && toolCall.result) {
           const result = toolCall.result as { nextActions?: typeof nextActions };
           if (result.nextActions) {
             nextActions.push(...result.nextActions);
@@ -83,6 +85,12 @@ ${transcription}
     }
 
     // 構造化データを返す
+    console.log("Analysis results:", { 
+      todosCount: todos.length, 
+      keyPointsCount: keyPoints.length, 
+      nextActionsCount: nextActions.length 
+    });
+    
     return NextResponse.json({
       todos,
       keyPoints,
