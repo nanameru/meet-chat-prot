@@ -1,7 +1,7 @@
 "use client";
 
 import { UserButton, useUser } from "@clerk/nextjs";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
@@ -236,7 +236,7 @@ export default function DashboardPage() {
   };
 
   // 分析実行
-  const analyzeTranscription = async (text: string) => {
+  const analyzeTranscription = useCallback(async (text: string) => {
     if (isAnalyzing || !text || text.length < 100) return;
 
     setIsAnalyzing(true);
@@ -272,7 +272,7 @@ export default function DashboardPage() {
     } finally {
       setIsAnalyzing(false);
     }
-  };
+  }, [isAnalyzing]);
 
   // 100文字ごとに自動分析（録音中でも実行）
   useEffect(() => {
@@ -283,7 +283,7 @@ export default function DashboardPage() {
     if (currentLength >= nextThreshold && !isAnalyzing) {
       analyzeTranscription(transcription);
     }
-  }, [transcription, lastAnalyzedLength, isAnalyzing]);
+  }, [transcription, lastAnalyzedLength, isAnalyzing, analyzeTranscription]);
 
   // クイックアクション（定型質問）
   const sendQuickAction = async (question: string) => {

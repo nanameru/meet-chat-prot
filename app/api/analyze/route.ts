@@ -60,25 +60,31 @@ ${transcription}
       timeframe: "immediate" | "short-term" | "long-term";
     }> = [];
 
-    // toolCallsから結果を抽出
+    // toolResultsから結果を抽出（Mastra 0.20.1+では toolCalls と toolResults が分離）
     console.log("Tool calls received:", response.toolCalls?.length || 0);
-    if (response.toolCalls && response.toolCalls.length > 0) {
-      for (const toolCall of response.toolCalls) {
-        console.log("Processing tool call:", toolCall.toolName);
-        if (toolCall.toolName === "create-todo" && toolCall.result) {
-          const result = toolCall.result as { todos?: typeof todos };
-          if (result.todos) {
-            todos.push(...result.todos);
+    console.log("Tool results received:", response.toolResults?.length || 0);
+    
+    if (response.toolResults && response.toolResults.length > 0) {
+      for (const toolResult of response.toolResults) {
+        const toolName = toolResult.payload?.toolName;
+        const result = toolResult.payload?.result;
+        
+        console.log("Processing tool result:", toolName);
+        
+        if (toolName === "create-todo" && result) {
+          const typedResult = result as { todos?: typeof todos };
+          if (typedResult.todos) {
+            todos.push(...typedResult.todos);
           }
-        } else if (toolCall.toolName === "extract-key-points" && toolCall.result) {
-          const result = toolCall.result as { keyPoints?: typeof keyPoints };
-          if (result.keyPoints) {
-            keyPoints.push(...result.keyPoints);
+        } else if (toolName === "extract-key-points" && result) {
+          const typedResult = result as { keyPoints?: typeof keyPoints };
+          if (typedResult.keyPoints) {
+            keyPoints.push(...typedResult.keyPoints);
           }
-        } else if (toolCall.toolName === "suggest-next-actions" && toolCall.result) {
-          const result = toolCall.result as { nextActions?: typeof nextActions };
-          if (result.nextActions) {
-            nextActions.push(...result.nextActions);
+        } else if (toolName === "suggest-next-actions" && result) {
+          const typedResult = result as { nextActions?: typeof nextActions };
+          if (typedResult.nextActions) {
+            nextActions.push(...typedResult.nextActions);
           }
         }
       }
