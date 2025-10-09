@@ -221,7 +221,7 @@ export default function DashboardPage() {
 
   // 分析実行
   const analyzeTranscription = async (text: string) => {
-    if (isAnalyzing || !text || text.length < 500) return;
+    if (isAnalyzing || !text || text.length < 100) return;
 
     setIsAnalyzing(true);
     try {
@@ -254,12 +254,12 @@ export default function DashboardPage() {
     }
   };
 
-  // 500文字ごとに自動分析
+  // 100文字ごとに自動分析
   useEffect(() => {
     const currentLength = transcription.length;
-    const nextThreshold = Math.floor(lastAnalyzedLength / 500) * 500 + 500;
+    const nextThreshold = Math.floor(lastAnalyzedLength / 100) * 100 + 100;
     
-    // 500文字を超えていて、まだ分析していない場合
+    // 100文字を超えていて、まだ分析していない場合
     if (currentLength >= nextThreshold && !isAnalyzing && !isRecording) {
       analyzeTranscription(transcription);
     }
@@ -525,7 +525,7 @@ export default function DashboardPage() {
         )}
 
         {/* 分析中のインジケーター（分析結果がまだない場合） */}
-        {isAnalyzing && !analysisResult && transcription.length >= 500 && (
+        {isAnalyzing && !analysisResult && transcription.length >= 100 && (
           <div className="flex-shrink-0 backdrop-blur-md bg-gradient-to-br from-purple-900/20 to-blue-900/20 rounded-xl p-4 sm:p-6 border border-purple-500/20 shadow-xl">
             <div className="flex items-center gap-3">
               <svg className="w-5 h-5 animate-spin text-purple-400" fill="none" viewBox="0 0 24 24">
@@ -555,12 +555,12 @@ export default function DashboardPage() {
                 <span className="text-xs text-gray-400">
                   {transcription.length}文字
                 </span>
-                {transcription.length >= 500 && transcription.length < lastAnalyzedLength + 500 && (
+                {transcription.length >= 100 && transcription.length < lastAnalyzedLength + 100 && (
                   <span className="text-xs text-green-400">
                     ✓ 分析済み
                   </span>
                 )}
-                {transcription.length >= lastAnalyzedLength + 500 && (
+                {transcription.length >= lastAnalyzedLength + 100 && (
                   <span className="text-xs text-yellow-400 animate-pulse">
                     ⏳ 分析待ち
                   </span>
