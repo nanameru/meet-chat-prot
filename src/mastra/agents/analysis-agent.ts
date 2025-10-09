@@ -69,12 +69,23 @@ export const analysisAgent = new Agent({
 （suggestNextActionsToolの結果を箇条書きで）
 - アクション [実施時期] - 理由
 `,
-  model: openai("gpt-4o-mini"),
+  model: openai("gpt-5-nano"),
   tools: {
     createTodo: createTodoTool,
     createSummary: createSummaryTool,
     extractKeyPoints: extractKeyPointsTool,
     suggestNextActions: suggestNextActionsTool,
+  },
+  defaultGenerateOptions: {
+    providerOptions: {
+      openai: {
+        // GPT-5 nanoは高スループット・シンプルな指示追従に最適
+        // バックグラウンド処理なのでコストと速度を重視
+        // 最小限の推論で高速実行
+        reasoningEffort: "minimal",
+        verbosity: "low",
+      },
+    },
   },
 });
 
